@@ -14,6 +14,7 @@ namespace vmPing.Classes
             WhenMinimized
         }
         
+        public static string FavoriteToStartWith { get; set; }
         public static int PingInterval { get; set; } = Constants.DefaultInterval;
         public static int PingTimeout { get; set; } = Constants.DefaultTimeout;
         public static int AlertThreshold { get; set; } = 2;

@@ -78,6 +78,9 @@ namespace vmPing.Classes
                 xd.Load(Configuration.Path);
 
                 XmlNode nodeFavorite = xd.SelectSingleNode($"/vmping/favorites/favorite[@title={Configuration.GetEscapedXpath(favoriteTitle)}]");
+                if (nodeFavorite == null)
+                  throw new Exception($"{favoriteTitle} could not be found");
+
                 favorite.ColumnCount = int.Parse(nodeFavorite.Attributes["columncount"].Value);
 
                 foreach (XmlNode node in xd.SelectNodes($"/vmping/favorites/favorite[@title={Configuration.GetEscapedXpath(favoriteTitle)}]/host"))
