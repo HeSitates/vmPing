@@ -9,98 +9,105 @@ using vmPing.Classes;
 
 namespace vmPing.Views
 {
-    /// <summary>
-    /// FloodHostWindow is a tool for generating a high volume of traffic to a specific host.
-    /// </summary>
-    public partial class FloodHostWindow : Window
+  /// <summary>
+  /// FloodHostWindow is a tool for generating a high volume of traffic to a specific host.
+  /// </summary>
+  public partial class FloodHostWindow : Window
+  {
+    private readonly FloodHostNode _floodHost = new FloodHostNode();
+
+    public FloodHostWindow()
     {
-        FloodHostNode _floodHost = new FloodHostNode();
+      InitializeComponent();
+
+      DataContext = _floodHost;
+
+      // Set initial focus to text box.
+      Loaded += (sender, e) =>
+          MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+    }
 
 
-        public FloodHostWindow()
+    private void btnFloodHost_Click(object sender, RoutedEventArgs e)
+    {
+      lblInformation.Visibility = Visibility.Collapsed;
+      FloodHost(_floodHost);
+    }
+
+
+    public void FloodHost(FloodHostNode node)
+    {
+      if (!node.IsActive)
+      {
+        if (txtHostname.Text.Length == 0)
         {
-            InitializeComponent();
-
-            DataContext = _floodHost;
-
-            // Set initial focus to text box.
-            Loaded += (sender, e) =>
-                MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+          return;
         }
 
+        node.BgWorker?.CancelAsync();
 
-        private void btnFloodHost_Click(object sender, RoutedEventArgs e)
+        node.DestinationAddress = txtHostname.Text;
+        node.PacketsSent = 0;
+        node.PacketsReceived = 0;
+        node.PacketsLost = 0;
+        node.StartTime = DateTime.Now;
+        node.IsActive = true;
+
+        node.BgWorker = new BackgroundWorker();
+        node.ResetEvent = new AutoResetEvent(false);
+        node.BgWorker.DoWork += backgroundThread_FloodHost;
+        node.BgWorker.WorkerSupportsCancellation = true;
+        node.BgWorker.RunWorkerAsync(node);
+      }
+      else
+      {
+        node.BgWorker.CancelAsync();
+        node.ResetEvent.WaitOne();
+        node.IsActive = false;
+      }
+    }
+
+
+    public void backgroundThread_FloodHost(object sender, DoWorkEventArgs e)
+    {
+      if (!(sender is BackgroundWorker bgWorker) || !(e.Argument is FloodHostNode node))
+      {
+        return;
+      }
+
+      var pingBuffer = Encoding.ASCII.GetBytes(Constants.DefaultIcmpData);
+      var pingOptions = new PingOptions(Constants.DefaultTTL, true);
+
+      while (!bgWorker.CancellationPending && node.IsActive)
+      {
+        using (var ping = new Ping())
         {
-            lblInformation.Visibility = Visibility.Collapsed;
-            FloodHost(_floodHost);
-        }
-
-
-        public void FloodHost(FloodHostNode node)
-        {
-            if (!node.IsActive)
+          try
+          {
+            ++node.PacketsSent;
+            // ReSharper disable once PossibleNullReferenceException
+            if (ping.Send(node.DestinationAddress, 100, pingBuffer, pingOptions).Status == IPStatus.Success)
             {
-                if (txtHostname.Text.Length == 0)
-                    return;
-
-                if (node.BgWorker != null)
-                    node.BgWorker.CancelAsync();
-
-                node.DestinationAddress = txtHostname.Text;
-                node.PacketsSent = 0;
-                node.PacketsReceived = 0;
-                node.PacketsLost = 0;
-                node.StartTime = DateTime.Now;
-                node.IsActive = true;
-
-                node.BgWorker = new BackgroundWorker();
-                node.ResetEvent = new AutoResetEvent(false);
-                node.BgWorker.DoWork += new DoWorkEventHandler(backgroundThread_FloodHost);
-                node.BgWorker.WorkerSupportsCancellation = true;
-                node.BgWorker.RunWorkerAsync(node);
+              ++node.PacketsReceived;
             }
             else
             {
-                node.BgWorker.CancelAsync();
-                node.ResetEvent.WaitOne();
-                node.IsActive = false;
-            }
-        }
-
-
-        public void backgroundThread_FloodHost(object sender, DoWorkEventArgs e)
-        {
-            var bgWorker = sender as BackgroundWorker;
-            var node = e.Argument as FloodHostNode;
-
-            var pingBuffer = Encoding.ASCII.GetBytes(Constants.DefaultIcmpData);
-            var pingOptions = new PingOptions(Constants.DefaultTTL, true);
-
-            while (!bgWorker.CancellationPending && node.IsActive)
-            {
-                using (Ping ping = new Ping())
-                {
-                    try
-                    {
-                        ++node.PacketsSent;
-                        if (ping.Send(node.DestinationAddress, 100, pingBuffer, pingOptions).Status == IPStatus.Success)
-                            ++node.PacketsReceived;
-                        else
-                            ++node.PacketsLost;
-
-                        node.ResetEvent.Set();
-                    }
-                    catch
-                    {
-                        e.Cancel = true;
-                        node.ResetEvent.Set();
-                        node.IsActive = false;
-                        return;
-                    }
-                }
+              ++node.PacketsLost;
             }
 
             node.ResetEvent.Set();
+          }
+          catch
+          {
+            e.Cancel = true;
+            node.ResetEvent.Set();
+            node.IsActive = false;
+            return;
+          }
         }
+      }
+
+      node.ResetEvent.Set();
     }
+  }
 }

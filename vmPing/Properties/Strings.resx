@@ -413,4 +413,13 @@
   <data name="Tooltip_IsolatedView" xml:space="preserve">
     <value>Open isolated view</value>
   </data>
+  <data name="SelectLocationForLogFiles_" xml:space="preserve">
+    <value>Select a location for the log files.</value>
+  </data>
+  <data name="SelectAudioFile" xml:space="preserve">
+    <value>Select an audio file</value>
+  </data>
+  <data name="WavAndAllFiles" xml:space="preserve">
+    <value>WAV files (*.wav)|*.wav|All files|*.*</value>
+  </data>
 </root>

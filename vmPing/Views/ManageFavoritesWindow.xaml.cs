@@ -46,14 +46,15 @@ namespace vmPing.Views
         private void Remove_Click(object sender, RoutedEventArgs e)
         {
             if (Favorites.SelectedIndex < 0)
-                return;
+            {
+              return;
+            }
 
-            var dialogWindow = new DialogWindow(
-                DialogWindow.DialogIcon.Warning,
-                Strings.DialogTitle_ConfirmDelete,
-                $"{Strings.ManageFavorites_Warn_DeleteA} {Favorites.SelectedItem.ToString()} {Strings.ManageFavorites_Warn_DeleteB}",
-                Strings.DialogButton_Remove,
-                true);
+            var dialogWindow = new DialogWindow(DialogWindow.DialogIcon.Warning,
+                                                Strings.DialogTitle_ConfirmDelete,
+                                                $"{Strings.ManageFavorites_Warn_DeleteA} {Favorites.SelectedItem} {Strings.ManageFavorites_Warn_DeleteB}",
+                                                Strings.DialogButton_Remove,
+                                                true);
             dialogWindow.Owner = this;
             if (dialogWindow.ShowDialog() == true)
             {
@@ -85,14 +86,16 @@ namespace vmPing.Views
         private void Edit_Click(object sender, RoutedEventArgs e)
         {
             if (Favorites.SelectedIndex < 0)
-                return;
+            {
+              return;
+            }
 
             var editFavoriteWindow = new EditFavoriteWindow(Favorites.SelectedItem.ToString());
             editFavoriteWindow.Owner = this;
 
             if (editFavoriteWindow.ShowDialog() == true)
             {
-                RefreshFavoriteList();
+              RefreshFavoriteList();
             }
         }
 
@@ -113,10 +116,10 @@ namespace vmPing.Views
 
         protected void HideMinimizeAndMaximizeButtons()
         {
-            IntPtr _windowHandle = new WindowInteropHelper(this).Handle;
+            var _windowHandle = new WindowInteropHelper(this).Handle;
             if (_windowHandle == null)
             {
-                return;
+              return;
             }
 
             SetWindowLong(_windowHandle, GWL_STYLE, GetWindowLong(_windowHandle, GWL_STYLE) & ~WS_MAXIMIZEBOX & ~WS_MINIMIZEBOX);

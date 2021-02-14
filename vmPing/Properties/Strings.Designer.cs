@@ -19,7 +19,7 @@ namespace vmPing.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Strings {
@@ -799,6 +799,24 @@ namespace vmPing.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Select an audio file.
+        /// </summary>
+        public static string SelectAudioFile {
+            get {
+                return ResourceManager.GetString("SelectAudioFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select a location for the log files..
+        /// </summary>
+        public static string SelectLocationForLogFiles_ {
+            get {
+                return ResourceManager.GetString("SelectLocationForLogFiles_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to DOWN.
         /// </summary>
         public static string StatusChange_Down {
@@ -921,6 +939,15 @@ namespace vmPing.Properties {
         public static string Tooltip_IsolatedView {
             get {
                 return ResourceManager.GetString("Tooltip_IsolatedView", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to WAV files (*.wav)|*.wav|All files|*.*.
+        /// </summary>
+        public static string WavAndAllFiles {
+            get {
+                return ResourceManager.GetString("WavAndAllFiles", resourceCulture);
             }
         }
     }

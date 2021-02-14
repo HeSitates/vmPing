@@ -1,68 +1,62 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Net.NetworkInformation;
 
 namespace vmPing.Classes
 {
-    class NetworkRouteNode : INotifyPropertyChanged
+  public class NetworkRouteNode : INotifyPropertyChanged
+  {
+    public event PropertyChangedEventHandler PropertyChanged;
+    
+    private string _hostAddress;
+    private string _hostName;
+    private long   _roundTripTime;
+
+    public string HostAddress
     {
-        public event PropertyChangedEventHandler PropertyChanged;
-
-
-        private string hostAddress;
-        public string HostAddress
+      get => _hostAddress;
+      set
+      {
+        if (value != _hostAddress)
         {
-            get { return hostAddress; }
-            set
-            {
-                if (value != hostAddress)
-                {
-                    hostAddress = value;
-                    NotifyPropertyChanged("HostAddress");
-                }
-            }
+          _hostAddress = value;
+          NotifyPropertyChanged(nameof(HostAddress));
         }
-
-
-        private string hostName;
-        public string HostName
-        {
-            get { return hostName; }
-            set
-            {
-                if (value != hostName)
-                {
-                    hostName = value;
-                    NotifyPropertyChanged("HostName");
-                }
-            }
-        }
-
-
-        private long roundTripTime;
-        public long RoundTripTime
-        {
-            get { return roundTripTime; }
-            set
-            {
-                if (value != roundTripTime)
-                {
-                    roundTripTime = value;
-                    NotifyPropertyChanged("RoundTripTime");
-                }
-            }
-        }
-
-        public IPStatus ReplyStatus { get; set; }
-        public int HopId { get; set; }
-
-
-        private void NotifyPropertyChanged(String info)
-        {
-            if (PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(info));
-            }
-        }
+      }
     }
+
+    public string HostName
+    {
+      get => _hostName;
+      set
+      {
+        if (value != _hostName)
+        {
+          _hostName = value;
+          NotifyPropertyChanged(nameof(HostName));
+        }
+      }
+    }
+
+    public long RoundTripTime
+    {
+      get => _roundTripTime;
+      set
+      {
+        if (value != _roundTripTime)
+        {
+          _roundTripTime = value;
+          NotifyPropertyChanged(nameof(RoundTripTime));
+        }
+      }
+    }
+
+    public IPStatus ReplyStatus { get; set; }
+
+    public int HopId { get; set; }
+
+    private void NotifyPropertyChanged(string info)
+    {
+      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(info));
+    }
+  }
 }

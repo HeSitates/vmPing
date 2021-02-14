@@ -5,7 +5,7 @@ using System.Windows;
 
 namespace vmPing.Classes
 {
-  class CommandLine
+  public class CommandLine
   {
     public static List<string> ParseArguments()
     {
@@ -13,81 +13,52 @@ namespace vmPing.Classes
       var errorMessage = string.Empty;
       var hostnames = new List<string>();
 
-      const int MinimumInterval = 1;
-      const int MaxInterval = 86400;
-      const int MinimumTimeout = 1;
-      const int MaxTimeout = 60;
+      const int minimumInterval = 1;
+      const int maxInterval = 86400;
+      const int minimumTimeout = 1;
+      const int maxTimeout = 60;
+      var helpText = $"Command Line Usage:{Environment.NewLine}vmPing [-i interval] [-w timeout] [<target_host>...] [<path_to_list_of_hosts>...]";
 
       for (var index = 1; index < args.Length; ++index)
       {
-        switch (args[index].ToLower())
+        var param = args[index];
+        switch (param.ToLower())
         {
           case "/f":
           case "-f":
-            if (index + 1 < args.Length && !string.IsNullOrWhiteSpace(args[index + 1]))
-            {
-              var favoriteTitle = args[index + 1];
-              ApplicationOptions.FavoriteToStartWith = favoriteTitle;
-
-              ++index;
-            }
-            else
-            {
-              errorMessage +=
-                $"For switch -i you must specify the number of seconds between {MinimumInterval} and {MaxInterval}.{Environment.NewLine}";
-              break;
-            }
-            break;
-          case "/i":
-          case "-i":
-            if (index + 1 < args.Length &&
-                int.TryParse(args[index + 1], out int interval) &&
-                interval >= MinimumInterval && interval <= MaxInterval)
-            {
-              ApplicationOptions.PingInterval = interval * 1000;
-              ++index;
-            }
-            else
-            {
-              errorMessage +=
-                  $"For switch -i you must specify the number of seconds between {MinimumInterval} and {MaxInterval}.{Environment.NewLine}";
-              break;
-            }
-            break;
-          case "/w":
-          case "-w":
-            if (args.Length > index + 1 &&
-                int.TryParse(args[index + 1], out int timeout) &&
-                timeout >= MinimumTimeout && timeout <= MaxTimeout)
-            {
-              ApplicationOptions.PingTimeout = timeout * 1000;
-              ++index;
-            }
-            else
-            {
-              errorMessage +=
-                  $"For switch -w you must specify the number of seconds between {MinimumTimeout} and {MaxTimeout}.{Environment.NewLine}";
-              break;
-            }
+            index = ReadFavorite(index, args, ref errorMessage);
             break;
           case "/?":
           case "-?":
           case "-h":
           case "--help":
-            MessageBox.Show(
-                $"Command Line Usage:{Environment.NewLine}vmPing [-i interval] [-w timeout] [<target_host>...] [<path_to_list_of_hosts>...]",
-                "vmPing Help",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            MessageBox.Show(helpText, "vmPing Help", MessageBoxButton.OK, MessageBoxImage.Information);
             Application.Current.Shutdown();
+            break;
+          case "/i":
+          case "-i":
+            index = ReadInterval(index, args, minimumInterval, maxInterval, ref errorMessage);
+            break;
+          case "/m":
+          case "-m":
+            ApplicationOptions.WindowState = WindowState.Maximized;
+            break;
+          case "/w":
+          case "-w":
+            index = ReadPingTimeout(args, index, minimumTimeout, maxTimeout, ref errorMessage);
             break;
           default:
             // If an invalid argument is supplied, check to see if the argument is a valid path name.
             //   If so, attempt to parse and read hosts from the file.  If not, use the argument as a hostname.
-            if (File.Exists(args[index]))
-              hostnames.AddRange(ReadHostsFromFile(args[index]));
+            if (File.Exists(param))
+            {
+              hostnames.AddRange(ReadHostsFromFile(param));
+            }
             else
-              hostnames.Add(args[index]);
+            {
+              hostnames.Add(param);
+            }
+
             break;
         }
       }
@@ -95,15 +66,11 @@ namespace vmPing.Classes
       // Display error message if any problems were encountered while parsing the arguments.
       if (errorMessage.Length > 0)
       {
-        MessageBox.Show(
-            $"{errorMessage}{Environment.NewLine}{Environment.NewLine}Command Line Usage:{Environment.NewLine}vmPing [-i interval] [-w timeout] [<target_host>...] [<path_to_list_of_hosts>...]",
-            "vmPing Error",
-            MessageBoxButton.OK,
-            MessageBoxImage.Error);
+        MessageBox.Show($"{errorMessage}{Environment.NewLine}{Environment.NewLine}{helpText}", "vmPing Error", MessageBoxButton.OK, MessageBoxImage.Error);
         Application.Current.Shutdown();
       }
 
-      for (int i = 0; i < hostnames.Count; ++i)
+      for (var i = 0; i < hostnames.Count; ++i)
       {
         hostnames[i] = hostnames[i].ToUpper();
       }
@@ -111,22 +78,79 @@ namespace vmPing.Classes
       return hostnames;
     }
 
+    private static int ReadFavorite(int index, string[] args, ref string errorMessage)
+    {
+      var favoriteTitle = string.Empty;
+      if (index + 1 < args.Length)
+      {
+        favoriteTitle = args[index + 1];
+      }
 
-    private static List<string> ReadHostsFromFile(string path)
+      if (!string.IsNullOrWhiteSpace(favoriteTitle) && !favoriteTitle.StartsWith("-"))
+      {
+        ApplicationOptions.FavoriteToStartWith = favoriteTitle;
+
+        ++index;
+      }
+      else
+      {
+        errorMessage += $"For switch -f you must specify a favorite to load.{Environment.NewLine}";
+        return index;
+      }
+
+      return index;
+    }
+
+    private static int ReadInterval(int index, string[] args, int minimumInterval, int maxInterval, ref string errorMessage)
+    {
+      if (index + 1 < args.Length && int.TryParse(args[index + 1], out var interval) && interval >= minimumInterval && interval <= maxInterval)
+      {
+        ApplicationOptions.PingInterval = interval * 1000;
+        ++index;
+      }
+      else
+      {
+        errorMessage += $"For switch -i you must specify the number of seconds between {minimumInterval} and {maxInterval}.{Environment.NewLine}";
+        return index;
+      }
+
+      return index;
+    }
+
+    private static int ReadPingTimeout(string[] args, int index, int minimumTimeout, int maxTimeout, ref string errorMessage)
+    {
+      if (args.Length > index + 1 && int.TryParse(args[index + 1], out var timeout) && timeout >= minimumTimeout && timeout <= maxTimeout)
+      {
+        ApplicationOptions.PingTimeout = timeout * 1000;
+        ++index;
+      }
+      else
+      {
+        errorMessage += $"For switch -w you must specify the number of seconds between {minimumTimeout} and {maxTimeout}.{Environment.NewLine}";
+        return index;
+      }
+
+      return index;
+    }
+
+    private static IEnumerable<string> ReadHostsFromFile(string path)
     {
       try
       {
-
         var linesInFile = new List<string>(File.ReadAllLines(path));
         var hostsInFile = new List<string>();
 
         foreach (var line in linesInFile)
         {
-          if (line == String.Empty)
+          if (line == string.Empty)
+          {
             continue;
+          }
 
-          if (!Char.IsLetterOrDigit(line[0]))
+          if (!char.IsLetterOrDigit(line[0]))
+          {
             continue;
+          }
 
           hostsInFile.Add(line.Trim());
         }
@@ -135,11 +159,7 @@ namespace vmPing.Classes
       }
       catch
       {
-        MessageBox.Show(
-            $"Failed parsing {path}",
-            "vmPing Error",
-            MessageBoxButton.OK,
-            MessageBoxImage.Error);
+        MessageBox.Show($"Failed parsing {path}", "vmPing Error", MessageBoxButton.OK, MessageBoxImage.Error);
         return new List<string>();
       }
     }

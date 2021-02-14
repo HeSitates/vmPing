@@ -5,12 +5,14 @@ using vmPing.Properties;
 
 namespace vmPing.Classes
 {
-    class Alias
+    public class Alias
     {
         public static Dictionary<string, string> GetAliases()
         {
             if (!Configuration.Exists())
-                return new Dictionary<string, string>();
+            {
+              return new Dictionary<string, string>();
+            }
 
             try
             {
@@ -19,7 +21,10 @@ namespace vmPing.Classes
 
                 var aliases = new Dictionary<string, string>();
                 foreach (XmlNode node in xd.SelectNodes("/vmping/aliases/alias"))
-                    aliases.Add(node.Attributes["host"].Value, node.InnerText);
+                {
+                  aliases.Add(node.Attributes["host"].Value, node.InnerText);
+                }
+
                 return aliases;
             }
 
@@ -34,23 +39,25 @@ namespace vmPing.Classes
         public static void AddAlias(string hostname, string alias)
         {
             if (!Configuration.IsReady())
-                return;
+            {
+              return;
+            }
 
             try
             {
                 var xd = new XmlDocument();
                 xd.Load(Configuration.Path);
 
-                XmlNode nodeRoot = xd.SelectSingleNode("/vmping/aliases");
+                var nodeRoot = xd.SelectSingleNode("/vmping/aliases");
 
                 // Check if title already exists.
                 foreach (XmlNode node in xd.SelectNodes($"/vmping/aliases/alias[@host={Configuration.GetEscapedXpath(hostname)}]"))
                 {
-                    // Title already exists.  Delete any old versions.
-                    nodeRoot.RemoveChild(node);
+                  // Title already exists.  Delete any old versions.
+                  nodeRoot.RemoveChild(node);
                 }
 
-                XmlElement aliasEntry = xd.CreateElement("alias");
+                var aliasEntry = xd.CreateElement("alias");
                 aliasEntry.SetAttribute("host", hostname.ToUpper());
                 aliasEntry.InnerText = alias;
                 nodeRoot.AppendChild(aliasEntry);
@@ -67,20 +74,23 @@ namespace vmPing.Classes
         public static void DeleteAlias(string key)
         {
             if (!Configuration.Exists())
-                return;
-            
+            {
+              return;
+            }
+
             try
             {
                 var xd = new XmlDocument();
                 xd.Load(Configuration.Path);
 
                 // Search for alias.
-                XmlNode nodeRoot = xd.SelectSingleNode("/vmping/aliases");
+                var nodeRoot = xd.SelectSingleNode("/vmping/aliases");
                 foreach (XmlNode node in xd.SelectNodes($"/vmping/aliases/alias[@host={Configuration.GetEscapedXpath(key)}]"))
                 {
-                    // Found title.  Delete all versions.
-                    nodeRoot.RemoveChild(node);
+                  // Found title.  Delete all versions.
+                  nodeRoot.RemoveChild(node);
                 }
+
                 xd.Save(Configuration.Path);
             }
 

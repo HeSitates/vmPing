@@ -73,10 +73,29 @@
     <Compile Include="Classes\Probe-Tcp.cs" />
     <Compile Include="Classes\Probe-Traceroute.cs" />
     <Compile Include="Classes\Probe-Util.cs" />
+    <Compile Include="Classes\ProbeStatus.cs" />
+    <Compile Include="Classes\ProbeType.cs" />
     <Compile Include="Classes\StatusChangeLog.cs" />
     <Compile Include="Classes\Util.cs" />
-    <Compile Include="Classes\ValueConverters.cs" />
     <Compile Include="Controls\ListBoxBehavior.cs" />
+    <Compile Include="Converters\BooleanToHiddenVisibilityConverter.cs" />
+    <Compile Include="Converters\BooleanToImageConverter.cs" />
+    <Compile Include="Converters\BoolToStringConverter.cs" />
+    <Compile Include="Converters\BoolToValueConverter.cs" />
+    <Compile Include="Converters\ButtonTextVisibilityConverter.cs" />
+    <Compile Include="Converters\HostnameFontsizeConverter.cs" />
+    <Compile Include="Converters\InverseBooleanConverter.cs" />
+    <Compile Include="Converters\InverseBooleanToVisibilityConverter.cs" />
+    <Compile Include="Converters\ProbeCountToGlobalStartStopIcon.cs" />
+    <Compile Include="Converters\ProbeCountToGlobalStartStopText.cs" />
+    <Compile Include="Converters\ProbeStatusToAliasBrushConverter.cs" />
+    <Compile Include="Converters\ProbeStatusToBackgroundBrushConverter.cs" />
+    <Compile Include="Converters\ProbeStatusToForegroundBrushConverter.cs" />
+    <Compile Include="Converters\ProbeStatusToGlyphConverter.cs" />
+    <Compile Include="Converters\ProbeStatusToStatisticsBrushConverter.cs" />
+    <Compile Include="Converters\ProbeTypeToFontSizeConverter.cs" />
+    <Compile Include="Converters\ProbeTypeToVisibilityConverter.cs" />
+    <Compile Include="Converters\StringToBrushConverter.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

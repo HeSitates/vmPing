@@ -10,10 +10,10 @@ namespace vmPing.Views
     /// NewFavoriteWindow provides an interface for creating a favorite.  A favorite is a
     /// collection of hosts that can be recalled later.
     /// </summary>
-    public partial class NewFavoriteWindow : Window
+    public partial class NewFavoriteWindow
     {
-        private List<string> HostList;
-        private int ColumnCount;
+        private readonly List<string> _hostList;
+        private readonly int          _columnCount;
 
         public NewFavoriteWindow(List<string> hostList, int columnCount)
         {
@@ -21,12 +21,11 @@ namespace vmPing.Views
 
             Contents.ItemsSource = hostList;
 
-            HostList = hostList;
-            ColumnCount = columnCount;
+            _hostList = hostList;
+            _columnCount = columnCount;
 
             // Set initial focus to text box.
-            Loaded += (sender, e) =>
-                MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+            Loaded += (sender, e) => MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
         }
 
         private void Save_Click(object sender, RoutedEventArgs e)
@@ -45,26 +44,24 @@ namespace vmPing.Views
             // Check if favorite title already exists.
             if (Favorite.TitleExists(MyTitle.Text))
             {
-                var warningWindow = DialogWindow.WarningWindow(
-                    message: $"{MyTitle.Text} {Strings.NewFavorite_Warn_AlreadyExists}",
-                    confirmButtonText: Strings.DialogButton_Overwrite);
+                var warningWindow = DialogWindow.WarningWindow(message: $"{MyTitle.Text} {Strings.NewFavorite_Warn_AlreadyExists}", confirmButtonText: Strings.DialogButton_Overwrite);
                 warningWindow.Owner = this;
                 if (warningWindow.ShowDialog() == true)
+                // User opted to overwrite existing favorite entry.
                 {
-                    // User opted to overwrite existing favorite entry.
-                    SaveFavorite();
+                  SaveFavorite();
                 }
             }
             else
+            // Checks passed.  Saving.
             {
-                // Checks passed.  Saving.
-                SaveFavorite();
+              SaveFavorite();
             }
         }
 
         private void SaveFavorite()
         {
-            Favorite.Save(MyTitle.Text, HostList, ColumnCount);
+            Favorite.Save(MyTitle.Text, _hostList, _columnCount);
             DialogResult = true;
         }
     }
