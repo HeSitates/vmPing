@@ -10,186 +10,195 @@ using vmPing.Views;
 
 namespace vmPing.Classes
 {
-    public enum ProbeStatus
+  public partial class Probe : INotifyPropertyChanged
+  {
+    public static ObservableCollection<StatusChangeLog> StatusChangeLog = new ObservableCollection<StatusChangeLog>();
+    public static StatusHistoryWindow StatusWindow;
+
+    private static readonly Mutex _mutex = new Mutex();
+    private static          int   _activeCount;
+
+    private ObservableCollection<string> _history;
+    private ProbeType                    _type = ProbeType.Ping;
+    private string                       _hostname;
+    private string                       _alias;
+    private ProbeStatus                  _status = ProbeStatus.Inactive;
+    private bool                         _isActive;
+    private string                       _statisticsText;
+
+    public static int ActiveCount
     {
-        Up,
-        Down,
-        Error,
-        Indeterminate,
-        Inactive,
-        Scanner
+      get => _activeCount;
+      set
+      {
+        _activeCount = value;
+        OnActiveCountChanged(EventArgs.Empty);
+      }
+    }
+    
+    public static event EventHandler ActiveCountChanged;
+    
+    protected static void OnActiveCountChanged(EventArgs e)
+    {
+      ActiveCountChanged?.Invoke(null, e);
     }
 
+    public event PropertyChangedEventHandler PropertyChanged;
 
-    public enum ProbeType
+    public IsolatedPingWindow IsolatedWindow { get; set; }
+    
+    public int IndeterminateCount { get; set; }
+    
+    public PingStatistics Statistics { get; set; }
+    
+    public CancellationTokenSource CancelSource { get; set; }
+    
+    public ObservableCollection<string> History
     {
-        Dns,
-        Ping,
-        Traceroute
+      get => _history;
+      set
+      {
+        _history = value;
+        NotifyPropertyChanged(nameof(History));
+      }
     }
 
-
-    public partial class Probe : INotifyPropertyChanged
+    public ProbeType Type
     {
-        public static ObservableCollection<StatusChangeLog> StatusChangeLog = new ObservableCollection<StatusChangeLog>();
-        public static StatusHistoryWindow StatusWindow;
-
-        private static Mutex mutex = new Mutex();
-        private static int activeCount;
-        public static int ActiveCount
-        {
-            get => activeCount;
-            set
-            {
-                activeCount = value;
-                OnActiveCountChanged(EventArgs.Empty);
-            }
-        }
-        public static event EventHandler ActiveCountChanged;
-        protected static void OnActiveCountChanged(EventArgs e) => ActiveCountChanged?.Invoke(null, e);
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        public IsolatedPingWindow IsolatedWindow { get; set; }
-        public int IndeterminateCount { get; set; }
-        public PingStatistics Statistics { get; set; }
-        public CancellationTokenSource CancelSource { get; set; }
-        private ObservableCollection<string> history;
-        public ObservableCollection<string> History
-        {
-            get => history;
-            set
-            {
-                history = value;
-                NotifyPropertyChanged("History");
-            }
-        }
-
-        private ProbeType type = ProbeType.Ping;
-        public ProbeType Type
-        {
-            get => type;
-            set
-            {
-                type = value;
-                NotifyPropertyChanged("Type");
-            }
-        }
-
-        private string hostname;
-        public string Hostname
-        {
-            get => hostname;
-            set
-            {
-                if (value != hostname)
-                {
-                    hostname = value.Trim();
-                    NotifyPropertyChanged("Hostname");
-                }
-            }
-        }
-
-        private string alias;
-        public string Alias
-        {
-            get => alias;
-            set
-            {
-                alias = value;
-                NotifyPropertyChanged("Alias");
-            }
-        }
-
-        private ProbeStatus status = ProbeStatus.Inactive;
-        public ProbeStatus Status
-        {
-            get => status;
-            set
-            {
-                status = value;
-                NotifyPropertyChanged("Status");
-            }
-        }
-
-        private bool isActive = false;
-        public bool IsActive
-        {
-            get => isActive;
-            set
-            {
-                if (value != isActive)
-                {
-                    isActive = value;
-                    NotifyPropertyChanged("IsActive");
-
-                    mutex.WaitOne();
-                    if (value == true)
-                        ++ActiveCount;
-                    else
-                        --ActiveCount;
-                    mutex.ReleaseMutex();
-                    NotifyPropertyChanged("NumberOfActivePings");
-                }
-            }
-        }
-
-        private string statisticsText;
-        public string StatisticsText
-        {
-            get => statisticsText;
-            set
-            {
-                if (value != statisticsText)
-                {
-                    statisticsText = value;
-                    NotifyPropertyChanged("StatisticsText");
-                }
-            }
-        }
-
-
-        public void AddHistory(string historyItem)
-        {
-            const int MaxSize = 3600;
-
-            History.Add(historyItem);
-            if (History.Count > MaxSize)
-                History.RemoveAt(0);
-        }
-
-        public void WriteFinalStatisticsToHistory()
-        {
-            if (Statistics == null || Statistics.Sent == 0) return;
-
-            var roundTripTimes = new List<int>();
-            var rttRegex = new Regex($@"  \[(?<rtt><?\d+) ?{Strings.Milliseconds_Symbol}]$");
-
-            foreach (var historyItem in History)
-            {
-                Match regexMatch = rttRegex.Match(historyItem);
-                if (!regexMatch.Success) continue;
-                if (regexMatch.Groups["rtt"].Value == "<1")
-                    roundTripTimes.Add(0);
-                else
-                    roundTripTimes.Add(int.Parse(regexMatch.Groups["rtt"].Value));
-            }
-
-            // Display stats and round trip times.
-            AddHistory("");
-            AddHistory(
-                $"Sent {Statistics.Sent}, " +
-                $"Received {Statistics.Received}, " +
-                $"Lost {Statistics.Sent - Statistics.Received} ({(100 * (Statistics.Sent - Statistics.Received)) / Statistics.Sent}% loss)");
-            if (roundTripTimes.Count > 0)
-            {
-                AddHistory(
-                    $"Minimum ({roundTripTimes.Min()}{Strings.Milliseconds_Symbol}), " +
-                    $"Maximum ({roundTripTimes.Max()}{Strings.Milliseconds_Symbol}), " +
-                    $"Average ({roundTripTimes.Average().ToString("0.##")}{Strings.Milliseconds_Symbol})");
-            }
-            AddHistory(" ");
-        }
-
-        private void NotifyPropertyChanged(string info) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(info));
+      get => _type;
+      set
+      {
+        _type = value;
+        NotifyPropertyChanged(nameof(Type));
+      }
     }
+
+    public string Hostname
+    {
+      get => _hostname;
+      set
+      {
+        if (value != _hostname)
+        {
+          _hostname = value.Trim();
+          NotifyPropertyChanged(nameof(Hostname));
+        }
+      }
+    }
+
+    public string Alias
+    {
+      get => _alias;
+      set
+      {
+        _alias = value;
+        NotifyPropertyChanged(nameof(Alias));
+      }
+    }
+
+    public ProbeStatus Status
+    {
+      get => _status;
+      set
+      {
+        _status = value;
+        NotifyPropertyChanged(nameof(Status));
+      }
+    }
+
+    public bool IsActive
+    {
+      get => _isActive;
+      set
+      {
+        if (value == _isActive)
+        {
+          return;
+        }
+
+        _isActive = value;
+        NotifyPropertyChanged(nameof(IsActive));
+
+        _mutex.WaitOne();
+        if (value)
+        {
+          ++ActiveCount;
+        }
+        else
+        {
+          --ActiveCount;
+        }
+
+        _mutex.ReleaseMutex();
+        NotifyPropertyChanged("NumberOfActivePings");
+      }
+    }
+
+    public string StatisticsText
+    {
+      get => _statisticsText;
+      set
+      {
+        if (value != _statisticsText)
+        {
+          _statisticsText = value;
+          NotifyPropertyChanged(nameof(StatisticsText));
+        }
+      }
+    }
+    
+    public void AddHistory(string historyItem)
+    {
+      const int maxSize = 3600;
+
+      History.Add(historyItem);
+      if (History.Count > maxSize)
+      {
+        History.RemoveAt(0);
+      }
+    }
+
+    public void WriteFinalStatisticsToHistory()
+    {
+      if (Statistics == null || Statistics.Sent == 0)
+      {
+        return;
+      }
+
+      var roundTripTimes = new List<int>();
+      var rttRegex = new Regex($@"  \[(?<rtt><?\d+) ?{Strings.Milliseconds_Symbol}]$");
+
+      foreach (var historyItem in History)
+      {
+        var regexMatch = rttRegex.Match(historyItem);
+        if (!regexMatch.Success)
+        {
+          continue;
+        }
+
+        roundTripTimes.Add(regexMatch.Groups["rtt"].Value == "<1" ? 0 : int.Parse(regexMatch.Groups["rtt"].Value));
+      }
+
+      // Display stats and round trip times.
+      AddHistory("");
+      AddHistory(
+          $"Sent {Statistics.Sent}, " +
+          $"Received {Statistics.Received}, " +
+          $"Lost {Statistics.Sent - Statistics.Received} ({(100 * (Statistics.Sent - Statistics.Received)) / Statistics.Sent}% loss)");
+      if (roundTripTimes.Count > 0)
+      {
+        AddHistory(
+                   $"Minimum ({roundTripTimes.Min()}{Strings.Milliseconds_Symbol}), " +
+                   $"Maximum ({roundTripTimes.Max()}{Strings.Milliseconds_Symbol}), " +
+                   $"Average ({roundTripTimes.Average():0.##}{Strings.Milliseconds_Symbol})");
+      }
+
+      AddHistory(" ");
+    }
+
+    private void NotifyPropertyChanged(string info)
+    {
+      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(info));
+    }
+  }
 }

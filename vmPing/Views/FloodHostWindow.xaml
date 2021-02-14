@@ -3,16 +3,17 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:vmPing.Views"
         xmlns:classes="clr-namespace:vmPing.Classes"
+        xmlns:converters="clr-namespace:vmPing.Converters"
         Title="vmPing - Flood Host" Height="250" Width="400"
         ResizeMode="CanMinimize"
         Background="#002b36">
 
     <Window.Resources>
         <!-- Value converters -->
-        <classes:BoolToStringConverter x:Key="BoolToStringConverter" FalseValue="Flood Host" TrueValue="Stop Flood"/>
-        <classes:BooleanToHiddenVisibilityConverter x:Key="BooleanToHiddenVisibilityConverter" />
-        <classes:InverseBooleanConverter x:Key="InverseBooleanConverter" />
-        <classes:BooleanToImageConverter x:Key="BooleanToImageConverter" />
+        <converters:BoolToStringConverter x:Key="BoolToStringConverter" FalseValue="Flood Host" TrueValue="Stop Flood"/>
+        <converters:BooleanToHiddenVisibilityConverter x:Key="BooleanToHiddenVisibilityConverter" />
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        <converters:BooleanToImageConverter x:Key="BooleanToImageConverter" />
         
 
         <!-- Style for hostname textbox -->

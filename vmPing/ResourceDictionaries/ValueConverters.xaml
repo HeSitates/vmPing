@@ -1,25 +1,26 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:classes="clr-namespace:vmPing.Classes"
-                    xmlns:resource="clr-namespace:vmPing.Properties">
+                    xmlns:resource="clr-namespace:vmPing.Properties"
+                    xmlns:converters="clr-namespace:vmPing.Converters">
     
     <!-- Value converters -->
-    <classes:InverseBooleanConverter x:Key="InverseBooleanConverter" />
-    <classes:BooleanToImageConverter x:Key="BooleanToImageConverter" />
-    <classes:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
-    <classes:BoolToStringConverter x:Key="BoolToStringConverter" FalseValue="{x:Static resource:Strings.Button_Ping}" TrueValue="{x:Static resource:Strings.Button_Stop}" />
-    <classes:ProbeStatusToBackgroundBrushConverter x:Key="ProbeStatusToBackgroundBrushConverter" />
-    <classes:ProbeStatusToForegroundBrushConverter x:Key="ProbeStatusToForegroundBrushConverter" />
-    <classes:ProbeStatusToStatisticsBrushConverter x:Key="ProbeStatusToStatisticsBrushConverter" />
-    <classes:ProbeStatusToAliasBrushConverter x:Key="ProbeStatusToAliasBrushConverter" />
-    <classes:ProbeStatusToGlyphConverter x:Key="ProbeStatusToGlyphConverter" />
-    <classes:ProbeCountToGlobalStartStopText x:Key="ProbeCountToGlobalStartStopText" />
-    <classes:ProbeCountToGlobalStartStopIcon x:Key="ProbeCountToGlobalStartStopIcon" />
-    <classes:HostnameFontsizeConverter x:Key="HostnameFontsizeConverter" />
-    <classes:ButtonTextVisibilityConverter x:Key="ButtonTextVisibilityConverter" />
-    <classes:ProbeTypeToFontSizeConverter x:Key="ProbeTypeToFontSizeConverter" />
-    <classes:ProbeTypeToVisibilityConverter x:Key="ProbeTypeToVisibilityConverter" />
+    <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+    <converters:BooleanToImageConverter x:Key="BooleanToImageConverter" />
+    <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+    <converters:BoolToStringConverter x:Key="BoolToStringConverter" FalseValue="{x:Static resource:Strings.Button_Ping}" TrueValue="{x:Static resource:Strings.Button_Stop}" />
+    <converters:ProbeStatusToBackgroundBrushConverter x:Key="ProbeStatusToBackgroundBrushConverter" />
+    <converters:ProbeStatusToForegroundBrushConverter x:Key="ProbeStatusToForegroundBrushConverter" />
+    <converters:ProbeStatusToStatisticsBrushConverter x:Key="ProbeStatusToStatisticsBrushConverter" />
+    <converters:ProbeStatusToAliasBrushConverter x:Key="ProbeStatusToAliasBrushConverter" />
+    <converters:ProbeStatusToGlyphConverter x:Key="ProbeStatusToGlyphConverter" />
+    <converters:ProbeCountToGlobalStartStopText x:Key="ProbeCountToGlobalStartStopText" />
+    <converters:ProbeCountToGlobalStartStopIcon x:Key="ProbeCountToGlobalStartStopIcon" />
+    <converters:HostnameFontsizeConverter x:Key="HostnameFontsizeConverter" />
+    <converters:ButtonTextVisibilityConverter x:Key="ButtonTextVisibilityConverter" />
+    <converters:ProbeTypeToFontSizeConverter x:Key="ProbeTypeToFontSizeConverter" />
+    <converters:ProbeTypeToVisibilityConverter x:Key="ProbeTypeToVisibilityConverter" />
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-    <classes:BooleanToHiddenVisibilityConverter x:Key="BooleanToHiddenVisibilityConverter" />
-    <classes:StringToBrushConverter x:Key="StringToBrushConverter" />
+    <converters:BooleanToHiddenVisibilityConverter x:Key="BooleanToHiddenVisibilityConverter" />
+    <converters:StringToBrushConverter x:Key="StringToBrushConverter" />
 </ResourceDictionary>

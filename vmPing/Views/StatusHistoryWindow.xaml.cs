@@ -23,17 +23,22 @@ namespace vmPing.Views
 
             // When initially displaying the window, automatically scroll to the most recent entry.
             if (StatusHistoryList.Items.Count > 0)
-                StatusHistoryList.ScrollIntoView(StatusHistoryList.Items[StatusHistoryList.Items.Count - 1]);
+            {
+              StatusHistoryList.ScrollIntoView(StatusHistoryList.Items[StatusHistoryList.Items.Count - 1]);
+            }
         }
 
         private void PopupNotificationWindow_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             if (StatusHistoryList.Items.Count > 0)
             {
-                if (VisualTreeHelper.GetChild(StatusHistoryList, 0) is Decorator border)
+              if (VisualTreeHelper.GetChild(StatusHistoryList, 0) is Decorator border)
+              {
+                if (border.Child is ScrollViewer scroll)
                 {
-                    if (border.Child is ScrollViewer scroll) scroll.ScrollToEnd();
+                  scroll.ScrollToEnd();
                 }
+              }
             }
         }
     }

@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Media;
-
 using vmPing.Views;
 
 
@@ -16,7 +15,11 @@ namespace vmPing.Classes
     {
         public void StartStop()
         {
-            if (string.IsNullOrEmpty(Hostname)) return;
+            if (string.IsNullOrEmpty(Hostname))
+            {
+              return;
+            }
+
             if (IsActive)
             {
                 // Stopping probe.
@@ -63,10 +66,10 @@ namespace vmPing.Classes
         }
 
 
-        private void StopProbe(ProbeStatus status)
+        private void StopProbe(ProbeStatus probeStatus)
         {
             CancelSource.Cancel();
-            Status = status;
+            Status = probeStatus;
             IsActive = false;
         }
 
@@ -85,21 +88,26 @@ namespace vmPing.Classes
                         var ipAddresses = await Dns.GetHostAddressesAsync(host);
                         cancellationToken.ThrowIfCancellationRequested();
                         if (ipAddresses.Length > 0)
-                            await Application.Current.Dispatcher.BeginInvoke(
-                                new Action(() => AddHistory($"    ({ipAddresses[0]})")));
+                        {
+                          await Application.Current.Dispatcher.BeginInvoke(
+                                                                           new Action(() => AddHistory($"    ({ipAddresses[0]})")));
+                        }
+
                         break;
                     default:
                         throw new Exception();
                 }
+
                 return false;
             }
             catch
             {
                 if (!cancellationToken.IsCancellationRequested)
                 {
-                    await Application.Current.Dispatcher.BeginInvoke(
-                        new Action(() => AddHistory($"{Environment.NewLine}Unable to resolve hostname")));
+                  await Application.Current.Dispatcher.BeginInvoke(
+                                                                   new Action(() => AddHistory($"{Environment.NewLine}Unable to resolve hostname")));
                 }
+
                 return true;
             }
         }
@@ -113,9 +121,9 @@ namespace vmPing.Classes
                 var logPath = $@"{ApplicationOptions.LogPath}\{Util.GetSafeFilename(Hostname)}.txt";
                 try
                 {
-                    using (System.IO.StreamWriter outputFile = new System.IO.StreamWriter(@logPath, true))
+                    using (var outputFile = new System.IO.StreamWriter(logPath, true))
                     {
-                        outputFile.WriteLine(message.Insert(1, DateTime.Now.ToShortDateString() + " "));
+                      outputFile.WriteLine(message.Insert(1, DateTime.Now.ToShortDateString() + " "));
                     }
                 }
                 catch (Exception ex)
@@ -130,26 +138,26 @@ namespace vmPing.Classes
         }
 
 
-        private void WriteToStatusChangesLog(StatusChangeLog status)
+        private void WriteToStatusChangesLog(StatusChangeLog statusChangeLog)
         {
             // If logging is enabled, write the status change to a file.
             if (ApplicationOptions.IsLogStatusChangesEnabled && ApplicationOptions.LogStatusChangesPath.Length > 0)
             {
-                try
+              try
+              {
+                using (var outputFile = new System.IO.StreamWriter(ApplicationOptions.LogStatusChangesPath, true))
                 {
-                    using (System.IO.StreamWriter outputFile = new System.IO.StreamWriter(ApplicationOptions.LogStatusChangesPath, true))
-                    {
-                        outputFile.WriteLine($"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToLongTimeString()}\t{status.Hostname}\t{status.StatusAsString}");
-                    }
+                  outputFile.WriteLine($"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToLongTimeString()}\t{statusChangeLog.Hostname}\t{statusChangeLog.StatusAsString}");
                 }
-                catch (Exception ex)
-                {
-                    ApplicationOptions.IsLogStatusChangesEnabled = false;
-                    Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        DialogWindow.ErrorWindow($"Failed writing to log file. Logging has been disabled. {ex.Message}").ShowDialog();
-                    }));
-                }
+              }
+              catch (Exception ex)
+              {
+                ApplicationOptions.IsLogStatusChangesEnabled = false;
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                                                                      {
+                                                                        DialogWindow.ErrorWindow($"Failed writing to log file. Logging has been disabled. {ex.Message}").ShowDialog();
+                                                                      }));
+              }
             }
         }
 
@@ -162,69 +170,73 @@ namespace vmPing.Classes
         }
 
 
-        private void TriggerStatusChange(StatusChangeLog status)
+        private void TriggerStatusChange(StatusChangeLog statusChangeLog)
         {
             Application.Current.Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (ApplicationOptions.PopupOption == ApplicationOptions.PopupNotificationOption.Always ||
                 (ApplicationOptions.PopupOption == ApplicationOptions.PopupNotificationOption.WhenMinimized &&
-                Application.Current.MainWindow.WindowState == WindowState.Minimized))
+                Application.Current.MainWindow?.WindowState == WindowState.Minimized))
                 {
-                    mutex.WaitOne();
+                    _mutex.WaitOne();
                     if (!Application.Current.Windows.OfType<PopupNotificationWindow>().Any())
                     {
-                        // Mark all existing status changes as read.
-                        for (int i = 0; i < StatusChangeLog.Count; ++i)
-                            StatusChangeLog[i].HasStatusBeenCleared = true;
+                      // Mark all existing status changes as read.
+                      foreach (var log in StatusChangeLog)
+                      {
+                        log.HasStatusBeenCleared = true;
+                      }
                     }
-                    StatusChangeLog.Add(status);
-                    mutex.ReleaseMutex();
+
+                    StatusChangeLog.Add(statusChangeLog);
+                    _mutex.ReleaseMutex();
 
                     if (StatusWindow != null && StatusWindow.IsLoaded)
                     {
                         if (StatusWindow.WindowState == WindowState.Minimized)
-                            StatusWindow.WindowState = WindowState.Normal;
+                        {
+                          StatusWindow.WindowState = WindowState.Normal;
+                        }
+
                         StatusWindow.Focus();
                     }
                     else if (!Application.Current.Windows.OfType<PopupNotificationWindow>().Any())
                     {
-                        new PopupNotificationWindow(StatusChangeLog).Show();
+                      new PopupNotificationWindow(StatusChangeLog).Show();
                     }
                 }
                 else
                 {
-                    mutex.WaitOne();
-                    StatusChangeLog.Add(status);
-                    mutex.ReleaseMutex();
+                    _mutex.WaitOne();
+                    StatusChangeLog.Add(statusChangeLog);
+                    _mutex.ReleaseMutex();
                 }
             }));
 
-            
-
             if (ApplicationOptions.IsLogStatusChangesEnabled && ApplicationOptions.LogStatusChangesPath.Length > 0)
             {
-                mutex.WaitOne();
-                WriteToStatusChangesLog(status);
-                mutex.ReleaseMutex();
+                _mutex.WaitOne();
+                WriteToStatusChangesLog(statusChangeLog);
+                _mutex.ReleaseMutex();
             }
 
-            if ((status.Status == ProbeStatus.Down) && (ApplicationOptions.IsAudioAlertEnabled))
+            if ((statusChangeLog.Status == ProbeStatus.Down) && (ApplicationOptions.IsAudioAlertEnabled))
             {
-                try
+              try
+              {
+                using (var player = new SoundPlayer(ApplicationOptions.AudioFilePath))
                 {
-                    using (SoundPlayer player = new SoundPlayer(ApplicationOptions.AudioFilePath))
-                    {
-                        player.Play();
-                    }
+                  player.Play();
                 }
-                catch (Exception ex)
-                {
-                    ApplicationOptions.IsAudioAlertEnabled = false;
-                    Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        DialogWindow.ErrorWindow($"Failed to play audio file. Audio alerts have been disabled. {ex.Message}").ShowDialog();
-                    }));
-                }
+              }
+              catch (Exception ex)
+              {
+                ApplicationOptions.IsAudioAlertEnabled = false;
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                                                                      {
+                                                                        DialogWindow.ErrorWindow($"Failed to play audio file. Audio alerts have been disabled. {ex.Message}").ShowDialog();
+                                                                      }));
+              }
             }
         }
     }

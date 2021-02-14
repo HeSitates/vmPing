@@ -13,10 +13,10 @@ namespace vmPing.Views
   /// <summary>
   /// Interaction logic for MainWindow.xaml
   /// </summary>
-  public partial class MainWindow : Window
+  public partial class MainWindow
   {
-    private ObservableCollection<Probe> _ProbeCollection = new ObservableCollection<Probe>();
-    private Dictionary<string, string> _Aliases = new Dictionary<string, string>();
+    private readonly ObservableCollection<Probe> _probeCollection = new ObservableCollection<Probe>();
+    private          Dictionary<string, string>  _aliases         = new Dictionary<string, string>();
 
     public static RoutedCommand ProbeOptionsCommand = new RoutedCommand();
     public static RoutedCommand StartStopCommand = new RoutedCommand();
@@ -53,11 +53,11 @@ namespace vmPing.Views
         if (hosts.Count > 0)
         {
           AddProbe(hosts.Count);
-          for (int i = 0; i < hosts.Count; ++i)
+          for (var i = 0; i < hosts.Count; ++i)
           {
-            _ProbeCollection[i].Hostname = hosts[i].ToUpper();
-            _ProbeCollection[i].Alias = _Aliases.ContainsKey(_ProbeCollection[i].Hostname) ? _Aliases[_ProbeCollection[i].Hostname] : null;
-            _ProbeCollection[i].StartStop();
+            _probeCollection[i].Hostname = hosts[i].ToUpper();
+            _probeCollection[i].Alias = _aliases.ContainsKey(_probeCollection[i].Hostname) ? _aliases[_probeCollection[i].Hostname] : null;
+            _probeCollection[i].StartStop();
           }
         }
         else
@@ -65,10 +65,15 @@ namespace vmPing.Views
           AddProbe(2);
         }
 
-        ColumnCount.Value = _ProbeCollection.Count;
+        ColumnCount.Value = _probeCollection.Count;
       }
 
-      ProbeItemsControl.ItemsSource = _ProbeCollection;
+      ProbeItemsControl.ItemsSource = _probeCollection;
+      if (ApplicationOptions.WindowState == WindowState.Maximized)
+      {
+        WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        SourceInitialized += (s, a) => WindowState = WindowState.Maximized;
+      }
     }
 
 
@@ -130,7 +135,9 @@ namespace vmPing.Views
     public void AddProbe(int numberOfProbes = 1)
     {
       for (; numberOfProbes > 0; --numberOfProbes)
-        _ProbeCollection.Add(new Probe());
+      {
+        _probeCollection.Add(new Probe());
+      }
     }
 
 
@@ -142,8 +149,10 @@ namespace vmPing.Views
 
     private void ColumnCount_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
-      if (ColumnCount.Value > _ProbeCollection.Count)
-        ColumnCount.Value = _ProbeCollection.Count;
+      if (ColumnCount.Value > _probeCollection.Count)
+      {
+        ColumnCount.Value = _probeCollection.Count;
+      }
     }
 
 
@@ -151,35 +160,46 @@ namespace vmPing.Views
     {
       if (e.Key == Key.Enter)
       {
-        var probe = (sender as TextBox).DataContext as Probe;
+        var probe = (sender as TextBox)?.DataContext as Probe;
+        if (probe == null)
+        {
+          return;
+        }
+
         probe.StartStop();
 
-        if (_ProbeCollection.IndexOf(probe) < _ProbeCollection.Count - 1)
+        if (_probeCollection.IndexOf(probe) >= _probeCollection.Count - 1)
         {
-          var cp = ProbeItemsControl.ItemContainerGenerator.ContainerFromIndex(_ProbeCollection.IndexOf(probe) + 1) as ContentPresenter;
-          var tb = (TextBox)cp.ContentTemplate.FindName("Hostname", cp);
-
-          if (tb != null)
-            tb.Focus();
+          return;
         }
+
+        var cp = ProbeItemsControl.ItemContainerGenerator.ContainerFromIndex(_probeCollection.IndexOf(probe) + 1) as ContentPresenter;
+        var tb = (TextBox)cp?.ContentTemplate.FindName("Hostname", cp);
+
+        tb?.Focus();
       }
     }
 
 
     private void RemoveProbe_Click(object sender, RoutedEventArgs e)
     {
-      if (_ProbeCollection.Count <= 1)
+      if (_probeCollection.Count <= 1)
+      {
         return;
+      }
 
-      var probe = (sender as Button).DataContext as Probe;
+      var probe = (Probe)((Button)sender).DataContext;
       if (probe.IsActive)
       {
         // Stop/cancel active probe.
         probe.StartStop();
       }
-      _ProbeCollection.Remove(probe);
-      if (ColumnCount.Value > _ProbeCollection.Count)
-        ColumnCount.Value = _ProbeCollection.Count;
+
+      _probeCollection.Remove(probe);
+      if (ColumnCount.Value > _probeCollection.Count)
+      {
+        ColumnCount.Value = _probeCollection.Count;
+      }
     }
 
 
@@ -191,14 +211,18 @@ namespace vmPing.Views
 
     private void StartStopExecute(object sender, ExecutedRoutedEventArgs e)
     {
-      string toggleStatus = StartStopMenuHeader.Text;
+      var toggleStatus = StartStopMenuHeader.Text;
 
-      foreach (var probe in _ProbeCollection)
+      foreach (var probe in _probeCollection)
       {
         if (toggleStatus == Strings.Toolbar_StopAll && probe.IsActive)
+        {
           probe.StartStop();
+        }
         else if (toggleStatus == Strings.Toolbar_StartAll && !probe.IsActive)
+        {
           probe.StartStop();
+        }
       }
     }
 
@@ -220,9 +244,7 @@ namespace vmPing.Views
     {
       try
       {
-        var p = new System.Diagnostics.Process();
-        p.StartInfo.FileName =
-            System.Reflection.Assembly.GetExecutingAssembly().Location;
+        var p = new System.Diagnostics.Process { StartInfo = { FileName = System.Reflection.Assembly.GetExecutingAssembly().Location } };
         p.Start();
       }
 
@@ -249,7 +271,7 @@ namespace vmPing.Views
 
     private void AddMonitorExecute(object sender, ExecutedRoutedEventArgs e)
     {
-      _ProbeCollection.Add(new Probe());
+      _probeCollection.Add(new Probe());
     }
 
 
@@ -261,46 +283,50 @@ namespace vmPing.Views
 
     private void DisplayOptionsWindow()
     {
-      if (OptionsWindow.openWindow == null)
+      if (OptionsWindow.OpenWindow == null)
+      // Open the options window.
       {
-        // Open the options window.
         new OptionsWindow().Show();
       }
       else
+      // Options window is already open.  Activate it.
       {
-        // Options window is already open.  Activate it.
-        OptionsWindow.openWindow.Activate();
+        OptionsWindow.OpenWindow.Activate();
       }
     }
 
 
     private void RemoveAllProbes()
     {
-      foreach (var probe in _ProbeCollection)
+      foreach (var probe in _probeCollection)
       {
         if (probe.IsActive)
+        {
           probe.CancelSource.Cancel();
+        }
       }
-      _ProbeCollection.Clear();
+
+      _probeCollection.Clear();
       Probe.ActiveCount = 0;
     }
 
     private void LoadFavorites()
     {
       // Clear existing favorites menu.
-      for (int i = mnuFavorites.Items.Count - 1; i > 2; --i)
+      for (var i = mnuFavorites.Items.Count - 1; i > 2; --i)
+      {
         mnuFavorites.Items.RemoveAt(i);
+      }
 
       // Load favorites.
       foreach (var fav in Favorite.GetTitles())
       {
-        var menuItem = new MenuItem();
-        menuItem.Header = fav;
+        var menuItem = new MenuItem { Header = fav };
         menuItem.Click += (s, r) =>
-        {
-          var selectedFavorite = s as MenuItem;
-          StartFavorite(selectedFavorite.Header.ToString());
-        };
+                          {
+                            var selectedFavorite = s as MenuItem;
+                            StartFavorite(selectedFavorite?.Header.ToString());
+                          };
 
         mnuFavorites.Items.Add(menuItem);
       }
@@ -308,21 +334,28 @@ namespace vmPing.Views
 
     private void StartFavorite(string selectedFavorite)
     {
+      if (string.IsNullOrWhiteSpace(selectedFavorite))
+      {
+        return;
+      }
+
       RemoveAllProbes();
 
       var favorite = Favorite.GetContents(selectedFavorite);
       if (favorite.Hostnames.Count < 1)
+      {
         AddProbe();
+      }
       else
       {
         AddProbe(numberOfProbes: favorite.Hostnames.Count);
-        for (int i = 0; i < favorite.Hostnames.Count; ++i)
+        for (var i = 0; i < favorite.Hostnames.Count; ++i)
         {
-          _ProbeCollection[i].Hostname = favorite.Hostnames[i].ToUpper();
-          _ProbeCollection[i].Alias = _Aliases.ContainsKey(_ProbeCollection[i].Hostname)
-            ? _Aliases[_ProbeCollection[i].Hostname]
+          _probeCollection[i].Hostname = favorite.Hostnames[i].ToUpper();
+          _probeCollection[i].Alias = _aliases.ContainsKey(_probeCollection[i].Hostname)
+            ? _aliases[_probeCollection[i].Hostname]
             : null;
-          _ProbeCollection[i].StartStop();
+          _probeCollection[i].StartStop();
         }
       }
 
@@ -331,13 +364,15 @@ namespace vmPing.Views
 
     private void LoadAliases()
     {
-      _Aliases = Alias.GetAliases();
-      var aliasList = _Aliases.ToList();
-      aliasList.Sort((pair1, pair2) => pair1.Value.CompareTo(pair2.Value));
+      _aliases = Alias.GetAliases();
+      var aliasList = _aliases.ToList();
+      aliasList.Sort((pair1, pair2) => string.Compare(pair1.Value, pair2.Value, StringComparison.Ordinal));
 
       // Clear existing aliases menu.
-      for (int i = mnuAliases.Items.Count - 1; i > 1; --i)
+      for (var i = mnuAliases.Items.Count - 1; i > 1; --i)
+      {
         mnuAliases.Items.RemoveAt(i);
+      }
 
       // Load aliases.
       foreach (var alias in aliasList)
@@ -345,54 +380,59 @@ namespace vmPing.Views
         mnuAliases.Items.Add(BuildAliasMenuItem(alias, false));
       }
 
-      foreach (var probe in _ProbeCollection)
+      foreach (var probe in _probeCollection)
       {
-        probe.Alias = probe.Hostname != null && _Aliases.ContainsKey(probe.Hostname)
-            ? _Aliases[probe.Hostname]
-            : string.Empty;
+        probe.Alias = probe.Hostname != null && _aliases.ContainsKey(probe.Hostname)
+                        ? _aliases[probe.Hostname]
+                        : string.Empty;
       }
     }
 
     private MenuItem BuildAliasMenuItem(KeyValuePair<string, string> alias, bool isContextMenu)
     {
-      var menuItem = new MenuItem();
-      menuItem.Header = alias.Value;
+      var menuItem = new MenuItem { Header = alias.Value };
 
       if (isContextMenu)
       {
         menuItem.Click += (s, r) =>
-        {
-          var selectedMenuItem = s as MenuItem;
-          var selectedAlias = (Probe)selectedMenuItem.DataContext;
-          selectedAlias.Hostname = _Aliases.FirstOrDefault(x => x.Value == selectedMenuItem.Header.ToString()).Key;
-          selectedAlias.StartStop();
-        };
+                          {
+                            if (s is MenuItem selectedMenuItem)
+                            {
+                              var selectedAlias = (Probe)selectedMenuItem.DataContext;
+                              selectedAlias.Hostname = _aliases.FirstOrDefault(x => x.Value == selectedMenuItem.Header.ToString()).Key;
+                              selectedAlias.StartStop();
+                            }
+                          };
       }
       else
       {
         menuItem.Click += (s, r) =>
-        {
-          var selectedAlias = s as MenuItem;
+                          {
+                            var selectedAlias = s as MenuItem;
+                            if (selectedAlias == null)
+                            {
+                              return;
+                            }
 
-          var didFindEmptyHost = false;
-          for (int i = 0; i < _ProbeCollection.Count; ++i)
-          {
-            if (string.IsNullOrWhiteSpace(_ProbeCollection[i].Hostname))
-            {
-              _ProbeCollection[i].Hostname = _Aliases.FirstOrDefault(x => x.Value == selectedAlias.Header.ToString()).Key;
-              _ProbeCollection[i].StartStop();
-              didFindEmptyHost = true;
-              break;
-            }
-          }
+                            var didFindEmptyHost = false;
+                            foreach (var probe in _probeCollection)
+                            {
+                              if (string.IsNullOrWhiteSpace(probe.Hostname))
+                              {
+                                probe.Hostname = _aliases.FirstOrDefault(x => x.Value == selectedAlias.Header.ToString()).Key;
+                                probe.StartStop();
+                                didFindEmptyHost = true;
+                                break;
+                              }
+                            }
 
-          if (!didFindEmptyHost)
-          {
-            AddProbe();
-            _ProbeCollection[_ProbeCollection.Count - 1].Hostname = _Aliases.FirstOrDefault(x => x.Value == selectedAlias.Header.ToString()).Key;
-            _ProbeCollection[_ProbeCollection.Count - 1].StartStop();
-          }
-        };
+                            if (!didFindEmptyHost)
+                            {
+                              AddProbe();
+                              _probeCollection[_probeCollection.Count - 1].Hostname = _aliases.FirstOrDefault(x => x.Value == selectedAlias.Header.ToString()).Key;
+                              _probeCollection[_probeCollection.Count - 1].StartStop();
+                            }
+                          };
       }
 
       return menuItem;
@@ -405,11 +445,13 @@ namespace vmPing.Views
       var currentHostList = new List<string>();
       var haveAnyHostnamesBeenEntered = false;
 
-      for (int i = 0; i < _ProbeCollection.Count; ++i)
+      foreach (var probe in _probeCollection)
       {
-        currentHostList.Add(_ProbeCollection[i].Hostname);
-        if (!string.IsNullOrWhiteSpace(_ProbeCollection[i].Hostname))
+        currentHostList.Add(probe.Hostname);
+        if (!string.IsNullOrWhiteSpace(probe.Hostname))
+        {
           haveAnyHostnamesBeenEntered = true;
+        }
       }
 
       if (!haveAnyHostnamesBeenEntered)
@@ -420,8 +462,7 @@ namespace vmPing.Views
         return;
       }
 
-      var addToFavoritesWindow = new NewFavoriteWindow(currentHostList, (int)ColumnCount.Value);
-      addToFavoritesWindow.Owner = this;
+      var addToFavoritesWindow = new NewFavoriteWindow(currentHostList, (int)ColumnCount.Value) { Owner = this };
       if (addToFavoritesWindow.ShowDialog() == true)
       {
         LoadFavorites();
@@ -433,8 +474,7 @@ namespace vmPing.Views
       if (ManageFavoritesWindow.openWindow == null)
       {
         // Open the favorites window.
-        var manageFavoritesWindow = new ManageFavoritesWindow();
-        manageFavoritesWindow.Owner = this;
+        var manageFavoritesWindow = new ManageFavoritesWindow { Owner = this };
         manageFavoritesWindow.ShowDialog();
         LoadFavorites();
       }
@@ -447,18 +487,17 @@ namespace vmPing.Views
 
     private void mnuManageAliases_Click(object sender, RoutedEventArgs e)
     {
-      if (ManageAliasesWindow.openWindow == null)
+      if (ManageAliasesWindow.OpenWindow == null)
       {
         // Open the aliases window.
-        var manageAliasesWindow = new ManageAliasesWindow();
-        manageAliasesWindow.Owner = this;
+        var manageAliasesWindow = new ManageAliasesWindow { Owner = this };
         manageAliasesWindow.ShowDialog();
         LoadAliases();
       }
       else
       {
         // Aliases window is already open.  Activate it.
-        ManageAliasesWindow.openWindow.Activate();
+        ManageAliasesWindow.OpenWindow.Activate();
       }
     }
 
@@ -488,7 +527,7 @@ namespace vmPing.Views
 
     private void IsolatedView_Click(object sender, RoutedEventArgs e)
     {
-      var probe = (sender as Button).DataContext as Probe;
+      var probe = (Probe)((Button)sender).DataContext;
       if (probe.IsolatedWindow == null || probe.IsolatedWindow.IsLoaded == false)
       {
         new IsolatedPingWindow(probe).Show();
@@ -501,18 +540,16 @@ namespace vmPing.Views
 
     private void EditAlias_Click(object sender, RoutedEventArgs e)
     {
-      var probe = (sender as Button).DataContext as Probe;
+      var probe = (sender as Button)?.DataContext as Probe;
 
-      if (string.IsNullOrEmpty(probe.Hostname))
+      if (string.IsNullOrEmpty(probe?.Hostname))
+      {
         return;
+      }
 
-      if (_Aliases.ContainsKey(probe.Hostname))
-        probe.Alias = _Aliases[probe.Hostname];
-      else
-        probe.Alias = string.Empty;
+      probe.Alias = _aliases.ContainsKey(probe.Hostname) ? _aliases[probe.Hostname] : string.Empty;
 
-      var wnd = new EditAliasWindow(probe);
-      wnd.Owner = this;
+      var wnd = new EditAliasWindow(probe) { Owner = this };
 
       if (wnd.ShowDialog() == true)
       {
@@ -537,47 +574,52 @@ namespace vmPing.Views
     private void Hostname_Loaded(object sender, RoutedEventArgs e)
     {
       // Set focus to textbox on newly added monitors.  If the hostname field is blank for any existing monitors, do not change focus.
-      for (int i = 0; i < _ProbeCollection.Count - 1; ++i)
+      for (var i = 0; i < _probeCollection.Count - 1; ++i)
       {
-        if (string.IsNullOrEmpty(_ProbeCollection[i].Hostname))
+        if (string.IsNullOrEmpty(_probeCollection[i].Hostname))
+        {
           return;
+        }
       }
-        ((TextBox)sender).Focus();
+
+      ((TextBox)sender).Focus();
     }
 
     private void Hostname_TextChanged(object sender, TextChangedEventArgs e)
     {
       // Check if there is an alias for the hostname as you type.
-      var probe = (sender as TextBox).DataContext as Probe;
-      if (probe.Hostname != null)
+      var probe = (sender as TextBox)?.DataContext as Probe;
+      if (probe?.Hostname != null)
       {
-        probe.Alias = _Aliases.ContainsKey(probe.Hostname) ? _Aliases[probe.Hostname] : null;
+        probe.Alias = _aliases.ContainsKey(probe.Hostname) ? _aliases[probe.Hostname] : null;
       }
     }
 
     private void Window_ContentRendered(object sender, EventArgs e)
     {
       // Set initial focus first text box.
-      if (_ProbeCollection.Count > 0)
+      if (_probeCollection.Count <= 0)
       {
-        var cp = ProbeItemsControl.ItemContainerGenerator.ContainerFromIndex(0) as ContentPresenter;
-        var tb = (TextBox)cp.ContentTemplate.FindName("Hostname", cp);
-
-        if (tb != null)
-          tb.Focus();
+        return;
       }
+
+      var cp = ProbeItemsControl.ItemContainerGenerator.ContainerFromIndex(0) as ContentPresenter;
+      var tb = (TextBox)cp?.ContentTemplate.FindName("Hostname", cp);
+
+      tb?.Focus();
     }
 
     private void Logo_TargetUpdated(object sender, System.Windows.Data.DataTransferEventArgs e)
     {
       // This event is tied to the background image that appears in each probe window.
       // After a probe is started, this event removes the image from the ItemsControl.
-      var image = (sender as Image);
-      if (image.Visibility == Visibility.Collapsed)
+      if (!(sender is Image image) || image.Visibility != Visibility.Collapsed)
       {
-        image.Visibility = Visibility.Collapsed;
-        image.Source = null;
+        return;
       }
+
+      image.Visibility = Visibility.Collapsed;
+      image.Source     = null;
     }
 
     // Experimenting with multi-color listbox items.

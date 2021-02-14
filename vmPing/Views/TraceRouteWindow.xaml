@@ -3,15 +3,16 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:vmPing.Views"
         xmlns:classes="clr-namespace:vmPing.Classes"
+        xmlns:converters="clr-namespace:vmPing.Converters"
         Title="vmPing - Trace Route" Height="464" Width="400"
         ResizeMode="CanMinimize"
         Background="#002b36">
 
     <Window.Resources>
         <!-- Value converters -->
-        <classes:BoolToStringConverter x:Key="BoolToStringConverter" FalseValue="Trace Route" TrueValue="Stop Trace"/>
-        <classes:InverseBooleanConverter x:Key="InverseBooleanConverter" />
-        <classes:BooleanToImageConverter x:Key="BooleanToImageConverter" />
+        <converters:BoolToStringConverter x:Key="BoolToStringConverter" FalseValue="Trace Route" TrueValue="Stop Trace"/>
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        <converters:BooleanToImageConverter x:Key="BooleanToImageConverter" />
         
         <!-- Style for hostname textbox -->
         <ControlTemplate x:Key="TextBoxBaseControlTemplatez" TargetType="{x:Type TextBoxBase}">

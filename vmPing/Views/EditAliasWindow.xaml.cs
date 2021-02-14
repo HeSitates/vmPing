@@ -10,7 +10,7 @@ namespace vmPing.Views
     /// </summary>
     public partial class EditAliasWindow : Window
     {
-        private string _Hostname;
+        private readonly string _hostname;
 
         public EditAliasWindow(Probe pingItem) : this(pingItem.Hostname, pingItem.Alias)
         {
@@ -23,23 +23,23 @@ namespace vmPing.Views
             Header.Text = $"{Strings.EditAlias_AliasFor} {hostname}";
             MyAlias.Text = alias;
             MyAlias.SelectAll();
-            _Hostname = hostname;
+            _hostname = hostname;
 
             // Set initial focus to text box.
-            Loaded += (sender, e) =>
-                MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+            Loaded += (sender, e) => MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
         }
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(MyAlias.Text))
             {
-                Alias.DeleteAlias(_Hostname);
+              Alias.DeleteAlias(_hostname);
             }
             else
             {
-                Alias.AddAlias(_Hostname, MyAlias.Text);
+              Alias.AddAlias(_hostname, MyAlias.Text);
             }
+
             DialogResult = true;
         }
     }

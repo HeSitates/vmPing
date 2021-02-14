@@ -23,7 +23,7 @@ namespace vmPing.Views
 
             PositionWindow();
 
-            ICollectionView filteredChangeLog = new CollectionViewSource { Source = statusChangeLog }.View;
+            var filteredChangeLog = new CollectionViewSource { Source = statusChangeLog }.View;
             filteredChangeLog.Filter = p => (p as StatusChangeLog).HasStatusBeenCleared == false;
             StatusHistoryList.ItemsSource = filteredChangeLog;
 
@@ -40,10 +40,13 @@ namespace vmPing.Views
         {
             if (StatusHistoryList.Items.Count > 0)
             {
-                if (VisualTreeHelper.GetChild(StatusHistoryList, 0) is Decorator border)
+              if (VisualTreeHelper.GetChild(StatusHistoryList, 0) is Decorator border)
+              {
+                if (border.Child is ScrollViewer scroll)
                 {
-                    if (border.Child is ScrollViewer scroll) scroll.ScrollToEnd();
+                  scroll.ScrollToEnd();
                 }
+              }
             }
         }
 
@@ -78,7 +81,7 @@ namespace vmPing.Views
         private void PositionWindow()
         {
             // PositionWindow places the window in the lower right corner of the screen.
-            Rect desktopWorkingArea = SystemParameters.WorkArea;
+            var desktopWorkingArea = SystemParameters.WorkArea;
             Left = desktopWorkingArea.Right - Width;
             Top = desktopWorkingArea.Bottom - Height;
         }
@@ -95,7 +98,10 @@ namespace vmPing.Views
         private void Window_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             if (Application.Current.MainWindow.WindowState == WindowState.Minimized)
-                Application.Current.MainWindow.WindowState = WindowState.Normal;
+            {
+              Application.Current.MainWindow.WindowState = WindowState.Normal;
+            }
+
             Application.Current.MainWindow.Focus();
         }
 
@@ -114,7 +120,7 @@ namespace vmPing.Views
             }
             else if (Probe.StatusWindow.IsLoaded)
             {
-                Probe.StatusWindow.Focus();
+              Probe.StatusWindow.Focus();
             }
 
             Close();
