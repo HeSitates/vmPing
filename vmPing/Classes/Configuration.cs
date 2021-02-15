@@ -10,6 +10,8 @@ namespace vmPing.Classes
 {
   public class Configuration
   {
+    private static readonly IEncryptor _encryptor = new AesEncryptor();
+    
     public static string Path = Environment.ExpandEnvironmentVariables(@"%LOCALAPPDATA%\vmPing\vmPing.xml");
     public static string ParentFolder = Environment.ExpandEnvironmentVariables(@"%LOCALAPPDATA%\vmPing");
     public static string OldPath = Environment.ExpandEnvironmentVariables(@"%LOCALAPPDATA%\vmPing\vmPingFavorites.xml");
@@ -202,8 +204,8 @@ namespace vmPing.Classes
       configuration.AppendChild(GenerateOptionNode(xmlDocument: xd, name: "EmailPort", value: ApplicationOptions.EmailPort ?? string.Empty));
       configuration.AppendChild(GenerateOptionNode(xmlDocument: xd, name: "IsEmailAuthenticationRequired", value: ApplicationOptions.IsEmailAuthenticationRequired.ToString()));
 
-      configuration.AppendChild(GenerateOptionNode(xmlDocument: xd, name: "EmailUser", value: !string.IsNullOrWhiteSpace(ApplicationOptions.EmailUser) ? Util.EncryptStringAES(ApplicationOptions.EmailUser) : string.Empty));
-      configuration.AppendChild(GenerateOptionNode(xmlDocument: xd, name: "EmailPassword", value: !string.IsNullOrWhiteSpace(ApplicationOptions.EmailPassword) ? Util.EncryptStringAES(ApplicationOptions.EmailPassword) : string.Empty));
+      configuration.AppendChild(GenerateOptionNode(xmlDocument: xd, name: "EmailUser", value: !string.IsNullOrWhiteSpace(ApplicationOptions.EmailUser) ? _encryptor.EncryptString(ApplicationOptions.EmailUser) : string.Empty));
+      configuration.AppendChild(GenerateOptionNode(xmlDocument: xd, name: "EmailPassword", value: !string.IsNullOrWhiteSpace(ApplicationOptions.EmailPassword) ? _encryptor.EncryptString(ApplicationOptions.EmailPassword) : string.Empty));
       configuration.AppendChild(GenerateOptionNode(xmlDocument: xd, name: "EmailRecipient", value: ApplicationOptions.EmailRecipient ?? string.Empty));
       configuration.AppendChild(GenerateOptionNode(xmlDocument: xd, name: "EmailFromAddress", value: ApplicationOptions.EmailFromAddress ?? string.Empty));
       configuration.AppendChild(GenerateOptionNode(xmlDocument: xd, name: "IsAudioAlertEnabled", value: ApplicationOptions.IsAudioAlertEnabled.ToString()));
@@ -333,7 +335,7 @@ namespace vmPing.Classes
         {
           if (optionValue.Length > 0)
           {
-            setApplicationOption(Util.DecryptStringAES(optionValue));
+            setApplicationOption(_encryptor.DecryptString(optionValue));
           }
         }
       }

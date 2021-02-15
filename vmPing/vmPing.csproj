@@ -67,7 +67,11 @@
     <Compile Include="Classes\ApplicationOptions.cs" />
     <Compile Include="Classes\CommandLine.cs" />
     <Compile Include="Classes\Configuration.cs" />
+    <Compile Include="Classes\EmailSender.cs" />
+    <Compile Include="Classes\AesEncryptor.cs" />
     <Compile Include="Classes\Favorite.cs" />
+    <Compile Include="Classes\IEmailSender.cs" />
+    <Compile Include="Classes\IEncryptor.cs" />
     <Compile Include="Classes\Probe-Dns.cs" />
     <Compile Include="Classes\Probe-Icmp.cs" />
     <Compile Include="Classes\Probe-Tcp.cs" />

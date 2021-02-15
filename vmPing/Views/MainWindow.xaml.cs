@@ -15,8 +15,11 @@ namespace vmPing.Views
   /// </summary>
   public partial class MainWindow
   {
-    private readonly ObservableCollection<Probe> _probeCollection = new ObservableCollection<Probe>();
-    private          Dictionary<string, string>  _aliases         = new Dictionary<string, string>();
+    private readonly ObservableCollection<Probe> _probeCollection;
+    private          Dictionary<string, string>  _aliases;
+    private readonly IEmailSender                _emailSender;
+    //private readonly IEncryptor                  _encryptor;
+    //private readonly IConfiguration              _configuration;
 
     public static RoutedCommand ProbeOptionsCommand = new RoutedCommand();
     public static RoutedCommand StartStopCommand = new RoutedCommand();
@@ -29,11 +32,15 @@ namespace vmPing.Views
 
     public MainWindow()
     {
+      _probeCollection = new ObservableCollection<Probe>();
+      _aliases         = new Dictionary<string, string>();
+      _emailSender     = new EmailSender();
+      //_encryptor       = new Encryptor();
+      //_configuration   = new Configuration(_encryptor);
       InitializeComponent();
       InitializeApplication();
     }
-
-
+    
     private void InitializeApplication()
     {
       InitializeCommandBindings();
@@ -75,8 +82,7 @@ namespace vmPing.Views
         SourceInitialized += (s, a) => WindowState = WindowState.Maximized;
       }
     }
-
-
+    
     private void UpdatePopupOptionIsCheckedState()
     {
       PopupAlways.IsChecked = false;
@@ -96,8 +102,7 @@ namespace vmPing.Views
           break;
       }
     }
-
-
+    
     private void InitializeCommandBindings()
     {
       CommandBindings.Add(new CommandBinding(ProbeOptionsCommand, ProbeOptionsExecute));
@@ -130,23 +135,20 @@ namespace vmPing.Views
       FloodHostMenu.Command = FloodHostCommand;
       AddMonitorMenu.Command = AddMonitorCommand;
     }
-
-
+    
     public void AddProbe(int numberOfProbes = 1)
     {
       for (; numberOfProbes > 0; --numberOfProbes)
       {
-        _probeCollection.Add(new Probe());
+        _probeCollection.Add(new Probe(_emailSender));
       }
     }
-
-
+    
     public void ProbeStartStop_Click(object sender, EventArgs e)
     {
       ((Probe)((Button)sender).DataContext).StartStop();
     }
-
-
+    
     private void ColumnCount_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
       if (ColumnCount.Value > _probeCollection.Count)
@@ -154,7 +156,6 @@ namespace vmPing.Views
         ColumnCount.Value = _probeCollection.Count;
       }
     }
-
 
     private void Hostname_KeyDown(object sender, KeyEventArgs e)
     {
@@ -179,8 +180,7 @@ namespace vmPing.Views
         tb?.Focus();
       }
     }
-
-
+    
     private void RemoveProbe_Click(object sender, RoutedEventArgs e)
     {
       if (_probeCollection.Count <= 1)
@@ -201,14 +201,12 @@ namespace vmPing.Views
         ColumnCount.Value = _probeCollection.Count;
       }
     }
-
-
+    
     private void ProbeOptionsExecute(object sender, ExecutedRoutedEventArgs e)
     {
       DisplayOptionsWindow();
     }
-
-
+    
     private void StartStopExecute(object sender, ExecutedRoutedEventArgs e)
     {
       var toggleStatus = StartStopMenuHeader.Text;
@@ -225,8 +223,7 @@ namespace vmPing.Views
         }
       }
     }
-
-
+    
     private void HelpExecute(object sender, ExecutedRoutedEventArgs e)
     {
       if (HelpWindow._OpenWindow == null)
@@ -238,8 +235,7 @@ namespace vmPing.Views
         HelpWindow._OpenWindow.Activate();
       }
     }
-
-
+    
     private void NewInstanceExecute(object sender, ExecutedRoutedEventArgs e)
     {
       try
@@ -255,38 +251,33 @@ namespace vmPing.Views
         errorWindow.ShowDialog();
       }
     }
-
-
+    
     private void TraceRouteExecute(object sender, ExecutedRoutedEventArgs e)
     {
       new TraceRouteWindow().Show();
     }
-
-
+    
     private void FloodHostExecute(object sender, ExecutedRoutedEventArgs e)
     {
       new FloodHostWindow().Show();
     }
-
-
+    
     private void AddMonitorExecute(object sender, ExecutedRoutedEventArgs e)
     {
-      _probeCollection.Add(new Probe());
+      _probeCollection.Add(new Probe(_emailSender));
     }
-
-
+    
     private void mnuProbeOptions_Click(object sender, RoutedEventArgs e)
     {
       DisplayOptionsWindow();
     }
-
-
+    
     private void DisplayOptionsWindow()
     {
       if (OptionsWindow.OpenWindow == null)
       // Open the options window.
       {
-        new OptionsWindow().Show();
+        new OptionsWindow(_emailSender).Show();
       }
       else
       // Options window is already open.  Activate it.
@@ -294,8 +285,7 @@ namespace vmPing.Views
         OptionsWindow.OpenWindow.Activate();
       }
     }
-
-
+    
     private void RemoveAllProbes()
     {
       foreach (var probe in _probeCollection)
@@ -309,7 +299,7 @@ namespace vmPing.Views
       _probeCollection.Clear();
       Probe.ActiveCount = 0;
     }
-
+    
     private void LoadFavorites()
     {
       // Clear existing favorites menu.
@@ -437,8 +427,7 @@ namespace vmPing.Views
 
       return menuItem;
     }
-
-
+    
     private void mnuAddToFavorites_Click(object sender, RoutedEventArgs e)
     {
       // Display add to favorites window.

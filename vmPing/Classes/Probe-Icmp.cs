@@ -10,6 +10,13 @@ namespace vmPing.Classes
 {
   public partial class Probe
   {
+    private readonly IEmailSender _emailSender;
+    
+    public Probe(IEmailSender emailSender)
+    {
+      _emailSender = emailSender;
+    }
+
     private async void PerformIcmpProbe(CancellationToken cancellationToken)
     {
       InitializeProbe();
@@ -51,7 +58,7 @@ namespace vmPing.Classes
                 TriggerStatusChange(new StatusChangeLog { Timestamp = DateTime.Now, Hostname = Hostname, Status = ProbeStatus.Up });
                 if (ApplicationOptions.IsEmailAlertEnabled)
                 {
-                  Util.SendEmail("up", Hostname);
+                  _emailSender.SendEmail("up", Hostname);
                 }
               }
 
@@ -77,7 +84,7 @@ namespace vmPing.Classes
                 TriggerStatusChange(new StatusChangeLog { Timestamp = DateTime.Now, Hostname = Hostname, Status = ProbeStatus.Down });
                 if (ApplicationOptions.IsEmailAlertEnabled)
                 {
-                  Util.SendEmail("down", Hostname);
+                  _emailSender.SendEmail("down", Hostname);
                 }
               }
 
@@ -124,7 +131,7 @@ namespace vmPing.Classes
               TriggerStatusChange(new StatusChangeLog { Timestamp = DateTime.Now, Hostname = Hostname, Status = ProbeStatus.Error });
               if (ApplicationOptions.IsEmailAlertEnabled)
               {
-                Util.SendEmail("error", Hostname);
+                _emailSender.SendEmail("error", Hostname);
               }
             }
 
@@ -134,7 +141,6 @@ namespace vmPing.Classes
         }
       }
     }
-
 
     private async Task IcmpWait(IPStatus ipStatus)
     {
@@ -159,7 +165,6 @@ namespace vmPing.Classes
         await Task.Delay(ApplicationOptions.PingInterval);
       }
     }
-
 
     private void DisplayIcmpReply(PingReply pingReply)
     {

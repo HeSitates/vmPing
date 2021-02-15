@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Media;
+using System.Net;
+using System.Net.Mail;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -16,8 +18,11 @@ namespace vmPing.Views
   /// </summary>
   public partial class OptionsWindow
   {
-    public OptionsWindow()
+    private readonly IEmailSender _emailSender;
+
+    public OptionsWindow(IEmailSender emailSender)
     {
+      _emailSender = emailSender;
       InitializeComponent();
 
       PopulateGeneralOptions();
@@ -571,19 +576,21 @@ namespace vmPing.Views
       {
         try
         {
-          Util.SendTestEmail(
-                    serverAddress,
-                    serverPort,
-                    isAuthRequired,
-                    username,
-                    password,
-                    mailFrom,
-                    mailRecipient);
+          _emailSender.SendTestEmail(serverAddress, serverPort, isAuthRequired, username, password, mailFrom, mailRecipient);
+        }
+        catch (SmtpException sex)
+        {
+          var exMessage = sex.Message;
+          if (sex.InnerException is WebException wex)
+          {
+            exMessage = wex.Message;
+          }
+
+          Application.Current.Dispatcher.BeginInvoke(new Action(() => ShowError(exMessage, EmailAlertsTab, TestEmailButton)));
         }
         catch (Exception ex)
         {
-          Application.Current.Dispatcher.BeginInvoke(
-                    new Action(() => ShowError(ex.Message, EmailAlertsTab, TestEmailButton)));
+          Application.Current.Dispatcher.BeginInvoke(new Action(() => ShowError(ex.Message, EmailAlertsTab, TestEmailButton)));
         }
       });
       TestEmailButton.IsEnabled = true;

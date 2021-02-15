@@ -40,7 +40,6 @@ namespace vmPing.Classes
       return titleExists;
     }
 
-
     public static List<string> GetTitles()
     {
       if (!Configuration.Exists())
@@ -69,7 +68,6 @@ namespace vmPing.Classes
       favoriteTitles.Sort();
       return favoriteTitles;
     }
-
 
     public static Favorite GetContents(string favoriteTitle)
     {
@@ -109,12 +107,10 @@ namespace vmPing.Classes
       return favorite;
     }
 
-
     public static bool IsTitleInvalid(string title)
     {
       return string.IsNullOrWhiteSpace(title);
     }
-
 
     public static void Rename(string originalTitle, string newTitle)
     {
@@ -142,7 +138,6 @@ namespace vmPing.Classes
         Util.ShowError($"{Strings.Error_WriteConfig} {ex.Message}");
       }
     }
-
 
     public static void Save(string title, List<string> hostnames, int columnCount)
     {

@@ -80,7 +80,7 @@ namespace vmPing.Classes
               TriggerStatusChange(new StatusChangeLog { Timestamp = DateTime.Now, Hostname = Hostname, Status = ProbeStatus.Up });
               if (ApplicationOptions.IsEmailAlertEnabled)
               {
-                Util.SendEmail("up", Hostname);
+                _emailSender.SendEmail("up", Hostname);
               }
             }
 
@@ -118,7 +118,7 @@ namespace vmPing.Classes
               TriggerStatusChange(new StatusChangeLog { Timestamp = DateTime.Now, Hostname = Hostname, Status = ProbeStatus.Down });
               if (ApplicationOptions.IsEmailAlertEnabled)
               {
-                Util.SendEmail("down", Hostname);
+                _emailSender.SendEmail("down", Hostname);
               }
             }
 
@@ -149,7 +149,6 @@ namespace vmPing.Classes
         }
       }
     }
-
 
     private void DisplayTcpReply(bool isPortOpen, int portnumber, long elapsedTime)
     {
