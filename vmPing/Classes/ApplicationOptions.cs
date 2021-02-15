@@ -139,25 +139,24 @@ namespace vmPing.Classes
       GetPingOptions.DontFragment = DontFragment;
     }
 
-    public static IEnumerable<Visual> GetChildren(this Visual parent, bool recurse = true)
+    public static IEnumerable<Visual> GetChildren(this Visual parent)
     {
-      if (parent != null)
+      if (parent == null)
       {
-        var count = VisualTreeHelper.GetChildrenCount(parent);
-        for (var i = 0; i < count; i++)
-        {
-          // Retrieve child visual at specified index value.
-          if (VisualTreeHelper.GetChild(parent, i) is Visual child)
-          {
-            yield return child;
+        yield break;
+      }
 
-            if (recurse)
-            {
-              foreach (var grandChild in child.GetChildren(true))
-              {
-                yield return grandChild;
-              }
-            }
+      var count = VisualTreeHelper.GetChildrenCount(parent);
+      for (var i = 0; i < count; i++)
+      {
+        // Retrieve child visual at specified index value.
+        if (VisualTreeHelper.GetChild(parent, i) is Visual child)
+        {
+          yield return child;
+
+          foreach (var grandChild in child.GetChildren())
+          {
+            yield return grandChild;
           }
         }
       }
